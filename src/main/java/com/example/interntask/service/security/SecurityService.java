@@ -1,33 +1,27 @@
 package com.example.interntask.service.security;
 
-import com.example.interntask.globalException.exceptions.NotFoundException;
-import com.example.interntask.model.entity.UsersEntity;
-import com.example.interntask.repo.UsersRepository;
+import com.example.interntask.service.user.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
 public class SecurityService implements UserDetailsService {
-    private final UsersRepository usersRepository;
+    private final UserService userService;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws NotFoundException {
-        UsersEntity user = usersRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("username not found"));
-        return new User(user.getUsername(), user.getPassword(), getAuthorities(user));
-    }
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        com.example.interntask.model.entity.User user = userService.findUserByUserName(email);
 
-    private Collection<? extends GrantedAuthority> getAuthorities(UsersEntity usersEntity) {
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        return authorities;
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                Collections.emptyList()
+        );
     }
 }

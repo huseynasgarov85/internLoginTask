@@ -2,6 +2,7 @@ package com.example.interntask.globalException;
 
 import com.example.interntask.globalException.exceptions.AlreadyExistsException;
 import com.example.interntask.globalException.exceptions.AuthenticationException;
+import com.example.interntask.globalException.exceptions.Bearer_Token;
 import com.example.interntask.globalException.exceptions.NotFoundException;
 import com.example.interntask.model.dto.ExceptionDto;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,13 @@ public class GlobalErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionDto handleAlreadyExistsException(AlreadyExistsException e) {
         log.error("ActionLog is failed: {}", e.getMessage());
+        return new ExceptionDto(e.getMessage());
+    }
+
+    @ExceptionHandler(Bearer_Token.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ExceptionDto handleUnexpectedException(Bearer_Token e) {
+        log.error("ActionLog error " + e.getMessage());
         return new ExceptionDto(e.getMessage());
     }
 }

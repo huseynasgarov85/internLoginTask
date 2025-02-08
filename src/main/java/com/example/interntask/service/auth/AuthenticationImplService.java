@@ -5,7 +5,7 @@ import com.example.interntask.mapper.UsersMapper;
 import com.example.interntask.model.dto.UsersDto;
 import com.example.interntask.model.request.JwtRequest;
 import com.example.interntask.model.response.JwtResponse;
-import com.example.interntask.repo.UsersRepository;
+import com.example.interntask.repo.UsersRepo;
 import com.example.interntask.service.security.SecurityService;
 import com.example.interntask.service.token.TokenService;
 import com.example.interntask.util.JwtTokenUtil;
@@ -31,7 +31,7 @@ public class AuthenticationImplService implements AuthenticationService {
     private final JwtTokenUtil jwtTokenUtil;
     private final SecurityService userDetailService;
     private final UsersMapper usersMapper;
-    private final UsersRepository usersRepository;
+    private final UsersRepo usersRepo;
     private final ValidationUtil validationUtil;
     private final TokenService tokenService;
 
@@ -61,7 +61,7 @@ public class AuthenticationImplService implements AuthenticationService {
         usersDto.setPassword(passwordEncoder.encode(usersDto.getPassword()));
         var userEntity = usersMapper.mapToEntity(usersDto);
         userEntity.setDateTimeOfCreation(LocalDate.now().atStartOfDay());
-        usersRepository.save(userEntity);
+        usersRepo.save(userEntity);
         log.info("ActionLog.add.end:userDto {}", usersDto);
     }
 

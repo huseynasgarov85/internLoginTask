@@ -1,22 +1,34 @@
 package com.example.interntask.util;
 
+
+import com.example.interntask.globalException.exceptions.Bearer_Token;
+import com.example.interntask.model.entity.User;
+import com.example.interntask.repo.UsersRepo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import static org.hibernate.query.sqm.tree.SqmNode.log;
 
 @Service
 @RequiredArgsConstructor
 public class JwtTokenUtil {
 
     private final String SECRET_KEY = "secret";
+    private final UsersRepo userRepo;
+    public static final String EMAIL_KEY = "email";
 
 //    @Value("${secret.key}")
 //    private String SECRET_KEY;
@@ -43,7 +55,7 @@ public class JwtTokenUtil {
     }
 
     // Bu metod, tokenin vaxtinin dolub dolmadiqini yoxlayir
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
@@ -69,5 +81,63 @@ public class JwtTokenUtil {
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+    }
+    public String extractTokenFromHeader(String header) {
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
+    }
+
+    public Claims read(String token) {
+        Claims claims = null;
+        try {
+            claims = Jwts.parser()
+                    .setSigningKey(getSigningKey())
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception ex) {
+            log.error("ActionLog error  " + ex.getMessage());
+            throw new Bearer_Token("Bearer token");
+        }
+        if (claims != null) {
+            String typeOfToken = claims.get("type", String.class);
+            if ("ACCESS_TOKEN".equals(typeOfToken)) {
+                return claims;
+            }
+        }
+        return null;
+    }
+
+    public Long getId(String token) {
+        if (read(token) != null) {
+            return read(token).get("id", Long.class);
+        } else {
+            return null;
+        }
+    }
+    public String getUserByEmail(String tokenValue) {
+        String token = tokenValue.substring(7);
+        return getEmail(token);
+    }
+
+    public User getUserById(String token) {
+        token = token.substring(7);
+        Long id = getId(token);
+        log.info("Action id" + id);
+        return userRepo.findUserById(id).orElseThrow();
+    }
+
+    public String getEmail(String token) {
+        if (read(token) != null) {
+            return read(token).get(EMAIL_KEY, String.class);
+        } else {
+            return null;
+        }
+
     }
 }
